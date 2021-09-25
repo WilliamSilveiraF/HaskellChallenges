@@ -132,7 +132,41 @@ geraListaMunicipioFaixas :: CadastroSUS -> Municipio -> [FaixaIdade] -> [(FaixaI
 geraListaMunicipioFaixas dataBankSUS municipio listaIntervaloDeIdades = 
     [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS municipio ageRanges]]
 
---gerar lista por um conjunto Faixas de Idades e por Município
 geraListaEstadoFaixas :: CadastroSUS -> Estado -> [FaixaIdade] -> [(FaixaIdade, Quantidade)]
 geraListaEstadoFaixas dataBankSUS state listaIntervaloDeIdades = 
     [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS state ageRanges]]
+
+
+--   CADASTRO DE VACINAÇÃO   --
+type Vacinados = [Vacinado]
+
+dataBankVacinados :: Vacinados
+dataBankVacinados = [ 
+                    ( 3, [("Pfizer", (1, 12, 2020)), ("Pfizer", (30, 11, 2020))] ),
+                    (10, [ ("Moderna", (2, 11, 2020)) ])
+                    ]
+
+type Vacina = String
+type TipoDose = Int
+type Dose = (Vacina, Data)
+type Doses = [Dose]
+type Vacinado = (CPF, Doses)
+
+--Vacinados = [(CPF, Doses), (Int, [(Vacina, Data)]), (Int, [String, (Dia, Mes, Ano)])]
+
+
+aplicaPrimDose :: CPF -> CadastroSUS -> FaixaIdade -> Municipio -> Vacina -> Data -> Vacinados -> Vacinados
+aplicaPrimDose citizenCPF dataBankSUS faixadeidade municipio vacina dataVacinacao dataBankVacinados
+   | length dataBankVacinados /= 0    = error "Você já tomou a primeira doze"
+
+-- True == Minha primeira dose foi aplicada // False == Minha segunda dose não foi aplicada
+firstDoseApplied :: CPF -> Vacinados -> Bool
+firstDoseApplied citizenCPF dataBankVacinados = 
+    length [pessoaData | pessoaData <- dataBankVacinados, fExisteNoBancoDeVacinadosOuN citizenCPF pessoaData] /= 0
+    where
+        fExisteNoBancoDeVacinadosOuN citizenCPF (cpfData, doses)
+         | (citizenCPF == cpfData)  = True
+         | otherwise                = False
+
+getCPFVacinado :: Vacinado -> CPF
+getCPFVacinado (cpfVacinado,  _)  = cpfVacinado
