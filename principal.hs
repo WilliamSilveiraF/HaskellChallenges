@@ -82,48 +82,57 @@ removeSUS seuCPF dataBankSUS =
            | (checaCPF seuCPF dataBankSUS == False) = error "CPF não encontrado em nosso sistema, tente novamente."
 
 
+
 --                    GERENCIAMENTO DE MUNICÍPIOS                    --
+--    Novas Tipagens   ---
 type IdadeInicial = Int
 type IdadeFinal = Int
 type FaixaIdade = (IdadeInicial, IdadeFinal)
 type Quantidade = Int
 
---   Funções que usei nesse tópico   --
 
+--   Funções que usei nesse tópico   --
+--Criei essa função com o objetivo de localizar Cidadao através de determinados atributos que os mesmos possuem, neste primeiro caso abaixo foi Município, mas podia ser estado, cpf, data de nascimento e etc.
+fsearchmunicipio :: Cidadao -> Municipio -> Bool
+fsearchmunicipio (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) municipioProcurado
+            | (municipioProcurado == munData)    = True
+            | otherwise                          = False
+
+fsearchstate :: Cidadao -> Estado -> Bool
+fsearchstate (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) stateProcurado
+            | (stateProcurado == estadoData)    = True
+            | otherwise                         = False
 
 --Dado um município procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
 cidadaosPorMunicipio :: CadastroSUS -> Municipio -> Quantidade
 cidadaosPorMunicipio dataBankSUS municipio =
        length [pessoaData | pessoaData <- dataBankSUS, fsearchmunicipio pessoaData municipio]
-       where 
---fsearchmunicipio pega um Cidadao e municipioProcurado como parâmetro e retorna Booleanos para fins de exclusão na minha Compreensão de cima
-           fsearchmunicipio (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) municipioProcurado
-            | (municipioProcurado == munData)    = True
-            | otherwise                          = False
-
 
 --Dado um Estado procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
 cidadaosPorEstado :: CadastroSUS -> Estado -> Quantidade
 cidadaosPorEstado dataBankSUS state =
        length [pessoaData | pessoaData <- dataBankSUS, fsearchstate pessoaData state]
-       where 
-           fsearchstate (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) stateProcurado
-            | (stateProcurado == estadoData)    = True
-            | otherwise                         = False
 
--- Procure o número de pessoas que estão entre um determinado intervalo de idades em um município "X"
+-- Procure o número de pessoas que estão entre um intervalo de idades em um Município "X"
 cidadaosPorMunicipioIdade :: CadastroSUS -> Municipio -> FaixaIdade -> Quantidade
 cidadaosPorMunicipioIdade dataBankSUS municipio (initAge, endAge) = 
     length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade pessoaData), (getIdade pessoaData <= endAge), fsearchmunicipio pessoaData municipio]
-    where
-        fsearchmunicipio (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) municipioProcurado
-            | (municipioProcurado == munData)    = True
-            | otherwise                          = False
   
+--Procure o número de pessoas que estão entre um intervalo de idade em um Estado "Y"
 cidadaosPorEstadoIdade :: CadastroSUS -> Estado -> FaixaIdade -> Quantidade
 cidadaosPorEstadoIdade dataBankSUS state (initAge, endAge) =
     length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade pessoaData), (getIdade pessoaData <= endAge), fsearchstate pessoaData state]
-    where 
-           fsearchstate (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) stateProcurado
-            | (stateProcurado == estadoData)    = True
-            | otherwise                         = False
+
+
+--            GERAR LISTAS POR FAIXA DE IDADE                    --
+
+
+--gerar lista por um conjunto de Faixas de Idades e por Estado
+geraListaMunicipioFaixas :: CadastroSUS -> Municipio -> [FaixaIdade] -> [(FaixaIdade, Quantidade)]
+geraListaMunicipioFaixas dataBankSUS municipio listaIntervaloDeIdades = 
+    [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS municipio ageRanges]]
+
+--gerar lista por um conjunto Faixas de Idades e por Município
+geraListaEstadoFaixas :: CadastroSUS -> Estado -> [FaixaIdade] -> [(FaixaIdade, Quantidade)]
+geraListaEstadoFaixas dataBankSUS state listaIntervaloDeIdades = 
+    [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS state ageRanges]]
