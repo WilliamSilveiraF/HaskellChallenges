@@ -31,6 +31,10 @@ type Cidadao = (CPF, Nome, Genero, DataNasc, Endereco, Municipio, Estado, Telefo
 getCPF :: Cidadao -> CPF
 getCPF (cpf, _, _, _, _, _, _, _, _) = cpf
 
+--Calcule a idade de um Cidadao 
+getIdade :: Cidadao -> Int
+getIdade ( _, _, _, ( _, _, anoDeNascimento), _, _, _, _, _) = 2021 - anoDeNascimento
+
 
 --Confira se meu CPF está no Banco de Dados
 checaCPF :: CPF -> CadastroSUS -> Bool
@@ -77,21 +81,49 @@ removeSUS seuCPF dataBankSUS =
            | (checaCPF seuCPF dataBankSUS == True)  = True
            | (checaCPF seuCPF dataBankSUS == False) = error "CPF não encontrado em nosso sistema, tente novamente."
 
+
 --                    GERENCIAMENTO DE MUNICÍPIOS                    --
 type IdadeInicial = Int
 type IdadeFinal = Int
 type FaixaIdade = (IdadeInicial, IdadeFinal)
 type Quantidade = Int
 
+--   Funções que usei nesse tópico   --
+
+
+--Dado um município procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
 cidadaosPorMunicipio :: CadastroSUS -> Municipio -> Quantidade
 cidadaosPorMunicipio dataBankSUS municipio =
        length [pessoaData | pessoaData <- dataBankSUS, fsearchmunicipio pessoaData municipio]
        where 
+--fsearchmunicipio pega um Cidadao e municipioProcurado como parâmetro e retorna Booleanos para fins de exclusão na minha Compreensão de cima
            fsearchmunicipio (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) municipioProcurado
             | (municipioProcurado == munData)    = True
             | otherwise                          = False
 
 
---cidadaosPorEstado :: CadastroSUS -> Estado -> Quantidade
---cidadaosPorMunicipioIdade :: CadastroSUS -> Municipio-> FaixaIdade -> Quantidade
---cidadaosPorEstadoIdade :: CadastroSUS -> Estado -> FaixaIdade -> Quantidade
+--Dado um Estado procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
+cidadaosPorEstado :: CadastroSUS -> Estado -> Quantidade
+cidadaosPorEstado dataBankSUS state =
+       length [pessoaData | pessoaData <- dataBankSUS, fsearchstate pessoaData state]
+       where 
+           fsearchstate (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) stateProcurado
+            | (stateProcurado == estadoData)    = True
+            | otherwise                         = False
+
+-- Procure o número de pessoas que estão entre um determinado intervalo de idades em um município "X"
+cidadaosPorMunicipioIdade :: CadastroSUS -> Municipio -> FaixaIdade -> Quantidade
+cidadaosPorMunicipioIdade dataBankSUS municipio (initAge, endAge) = 
+    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade pessoaData), (getIdade pessoaData <= endAge), fsearchmunicipio pessoaData municipio]
+    where
+        fsearchmunicipio (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) municipioProcurado
+            | (municipioProcurado == munData)    = True
+            | otherwise                          = False
+  
+cidadaosPorEstadoIdade :: CadastroSUS -> Estado -> FaixaIdade -> Quantidade
+cidadaosPorEstadoIdade dataBankSUS state (initAge, endAge) =
+    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade pessoaData), (getIdade pessoaData <= endAge), fsearchstate pessoaData state]
+    where 
+           fsearchstate (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) stateProcurado
+            | (stateProcurado == estadoData)    = True
+            | otherwise                         = False
