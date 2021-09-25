@@ -25,14 +25,18 @@ type Telefone = String
 type Email = String
 type Cidadao = (CPF, Nome, Genero, DataNasc, Endereco, Municipio, Estado, Telefone, Email)
 
+--         GERENCIAMENTO DE CIDADÃO         --  
+
 --Localize meu CPF
 getCPF :: Cidadao -> CPF
 getCPF (cpf, _, _, _, _, _, _, _, _) = cpf
+
 
 --Confira se meu CPF está no Banco de Dados
 checaCPF :: CPF -> CadastroSUS -> Bool
 checaCPF seuCPF dataBankSUS =
     [item | item <- dataBankSUS, getCPF item == seuCPF] /= []
+
 
 --Adicione um novo Cidadao, se ele já tiver cadastrado retorne o erro "Cidadao ja foi cadastrado."
 adicionaSUS :: Cidadao -> CadastroSUS -> CadastroSUS
@@ -51,6 +55,7 @@ atualizaEndSUS seuCPF dataBankSUS newAddress =
              | citizenCPF == cpfData    =  (cpfData, nomeData, genData, nascData, newAddress, munData, estadoData, telData, emailData) 
              | otherwise                =  (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData)
 
+
 --Dado o CPF e o novo TELEFONE, logo o dataBankSUS é atualizado       
 atualizaTelSUS :: CPF  -> CadastroSUS -> Telefone -> CadastroSUS
 atualizaTelSUS seuCPF dataBankSUS newTel =
@@ -61,7 +66,8 @@ atualizaTelSUS seuCPF dataBankSUS newTel =
              | citizenCPF == cpfData    = (cpfData, nomeData, genData, nascData, endData, munData, estadoData, newTel, emailData)
              | otherwise                = (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData)
 
---
+
+--Dado um CPF de uma pessoa morta por ex, então remova essa pessoa do meu dataBankSUS
 removeSUS :: CPF -> CadastroSUS -> CadastroSUS
 removeSUS seuCPF dataBankSUS =
     [pessoaData | pessoaData <- dataBankSUS, fexisteounao seuCPF pessoaData]
@@ -70,3 +76,22 @@ removeSUS seuCPF dataBankSUS =
            | citizenCPF == cpfData        = False --se localizar não passe
            | (checaCPF seuCPF dataBankSUS == True)  = True
            | (checaCPF seuCPF dataBankSUS == False) = error "CPF não encontrado em nosso sistema, tente novamente."
+
+--                    GERENCIAMENTO DE MUNICÍPIOS                    --
+type IdadeInicial = Int
+type IdadeFinal = Int
+type FaixaIdade = (IdadeInicial, IdadeFinal)
+type Quantidade = Int
+
+cidadaosPorMunicipio :: CadastroSUS -> Municipio -> Quantidade
+cidadaosPorMunicipio dataBankSUS municipio =
+       length [pessoaData | pessoaData <- dataBankSUS, fsearchmunicipio pessoaData municipio]
+       where 
+           fsearchmunicipio (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) municipioProcurado
+            | (municipioProcurado == munData)    = True
+            | otherwise                          = False
+
+
+--cidadaosPorEstado :: CadastroSUS -> Estado -> Quantidade
+--cidadaosPorMunicipioIdade :: CadastroSUS -> Municipio-> FaixaIdade -> Quantidade
+--cidadaosPorEstadoIdade :: CadastroSUS -> Estado -> FaixaIdade -> Quantidade
