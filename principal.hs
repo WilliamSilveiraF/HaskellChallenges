@@ -35,6 +35,9 @@ getCPF (cpf, _, _, _, _, _, _, _, _) = cpf
 getIdade :: Cidadao -> Int
 getIdade ( _, _, _, ( _, _, anoDeNascimento), _, _, _, _, _) = 2021 - anoDeNascimento
 
+getMunicipio :: Cidadao -> Municipio
+getMunicipio (_, _, _, _, _, munData, _, _, _) = munData
+
 
 --Confira se meu CPF está no Banco de Dados
 checaCPF :: CPF -> CadastroSUS -> Bool
@@ -106,7 +109,7 @@ fsearchstate (cpfData, nomeData, genData, nascData, endData, munData, estadoData
 --Dado um município procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
 cidadaosPorMunicipio :: CadastroSUS -> Municipio -> Quantidade
 cidadaosPorMunicipio dataBankSUS municipio =
-       length [pessoaData | pessoaData <- dataBankSUS, fsearchmunicipio pessoaData municipio]
+        length [pessoaData | pessoaData <- dataBankSUS, fsearchmunicipio pessoaData municipio]
 
 --Dado um Estado procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
 cidadaosPorEstado :: CadastroSUS -> Estado -> Quantidade
@@ -142,7 +145,7 @@ type Vacinados = [Vacinado]
 
 dataBankVacinados :: Vacinados
 dataBankVacinados = [ 
-                    ( 3, [("Pfizer", (1, 12, 2020)), ("Pfizer", (30, 11, 2020))] ),
+                    ( 4, [("Pfizer", (1, 12, 2020)), ("Pfizer", (30, 11, 2020))] ),
                     (10, [ ("Moderna", (2, 11, 2020)) ])
                     ]
 
@@ -154,11 +157,36 @@ type Vacinado = (CPF, Doses)
 
 --Vacinados = [(CPF, Doses), (Int, [(Vacina, Data)]), (Int, [String, (Dia, Mes, Ano)])]
 
-
 aplicaPrimDose :: CPF -> CadastroSUS -> FaixaIdade -> Municipio -> Vacina -> Data -> Vacinados -> Vacinados
 aplicaPrimDose citizenCPF dataBankSUS faixadeidade municipio vacina dataVacinacao dataBankVacinados
-   | (firstDoseApplied citizenCPF dataBankVacinados == True)    = error "Primeira dose já aplicada"  --Se minha primeira dose foi aplicada, retorne "Primeira dose já aplicada"
-   | (checaCPF citizenCPF dataBankSUS == False)                 = error "CPF não encontrado no Banco de Dados SUS"
+   | (firstDoseApplied citizenCPF dataBankVacinados == True)               = error "Primeira dose já aplicada"  --Se minha primeira dose foi aplicada, retorne "Primeira dose já aplicada"
+   | (checaCPF citizenCPF dataBankSUS == False)                            = error "CPF não encontrado no Banco de Dados SUS"
+   | (checaIntervaloDeIdades citizenCPF dataBankSUS faixadeidade == False) = error "Fora da idade de vacinação corrente"
+   | (checaMunicipioDoCidadao citizenCPF dataBankSUS municipio == False)   = error "Municipio não compatível com o CadastroSUS. Por favor atualizar município."
+
+
+getCidadao :: CPF -> CadastroSUS -> CadastroSUS
+getCidadao citizenCPF dataBankSUS =
+    [pessoaData | pessoaData <- dataBankSUS, fCPFcorrespondeAaoCidadao citizenCPF pessoaData]
+
+--Confere se um CPF corresponde ao Cidadão                       *CARÁTER DE EXCLUSÃO EM OUTRAS FUNÇÕES
+fCPFcorrespondeAaoCidadao :: CPF -> Cidadao -> Bool
+fCPFcorrespondeAaoCidadao citizenCPF cidadao
+  | (citizenCPF == (getCPF cidadao)) = True
+  | otherwise                        = False -- NÃO TROCAR POR ERROR, POIS ELA FUNCIONA DE CARÁTER EXCLUSIVO PARA OUTRAS FUNÇÕES
+
+
+-- Checa se o Municipio fornecido, foi o mesmo que o cidadão cadastrou no dataBankSUS - TRUE = O municipio confere com o Banco de Dados // FALSE = O municipio não confere
+checaMunicipioDoCidadao :: CPF -> CadastroSUS -> Municipio -> Bool
+checaMunicipioDoCidadao citizenCPF dataBankSUS municipio =
+     (length [pessoaData | pessoaData <- dataBankSUS,  citizenCPF == (getCPF pessoaData), municipio == (getMunicipio pessoaData)]) == (length (getCidadao citizenCPF dataBankSUS))
+
+
+
+-- Retorna TRUE se o Cidadão passado está no intervalo de idades ou FALSE caso o contrário
+checaIntervaloDeIdades :: CPF -> CadastroSUS -> FaixaIdade -> Bool
+checaIntervaloDeIdades citizenCPF dataBankSUS (ageInt, ageEnd) =  
+    (length [pessoaData | pessoaData <- dataBankSUS,  citizenCPF == (getCPF pessoaData), ageInt < getIdade pessoaData &&  getIdade pessoaData < ageEnd]) == (length (getCidadao citizenCPF dataBankSUS))-- É o CPF que eu procuro?. A idade dele está entre as idades de parâmetro que foi me dado na função?
 
 
 -- True == Minha primeira dose foi aplicada // False == Minha segunda dose não foi aplicada
@@ -173,4 +201,3 @@ firstDoseApplied citizenCPF dataBankVacinados =
 getCPFVacinado :: Vacinado -> CPF
 getCPFVacinado (cpfVacinado,  _)  = cpfVacinado
 
---checaIntervaloDeIdades :: 
