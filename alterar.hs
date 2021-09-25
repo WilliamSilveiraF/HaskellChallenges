@@ -16,6 +16,7 @@ type Cidadao = (CPF, Nome, Endereco, Telefone)
 
 
 
+
 --Atualização de ENDEREÇO
 --A pessoa dá o CPF e o novo endereço logo o dataBankSUS é atualizado.
 atualizaEndSUS :: CPF -> CadastroSUS -> Endereco -> CadastroSUS
@@ -41,3 +42,13 @@ atualizaTelSUS seuCPF dataBankSUS newTel =
            fMudarouNaoTEL  citizenCPF (cpfData, nomeData, endData, telData) newTel
              | citizenCPF == cpfData    = (cpfData, nomeData, endData, newTel)
              | otherwise                = (cpfData, nomeData, endData, telData)
+
+
+--Remover do CadastroSUS
+removeSUS :: CPF -> CadastroSUS -> CadastroSUS
+removeSUS seuCPF dataBankSUS =
+    [fExisteouNao seuCPF pessoaData | pessoaData <- dataBankSUS]
+      where
+          fExisteouNao citizenCPF (cpfData, nomeData, endData, telData)
+           | citizenCPF == cpfData        = ( , , ,)
+           | otherwise                    = (cpfData, nomeData, endData, telData)
