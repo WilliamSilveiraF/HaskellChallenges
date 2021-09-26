@@ -192,10 +192,10 @@ aplicaPrimDose citizenCPF dataBankSUS faixadeidade municipio vacina dataVacinaca
 
 aplicaSegDose :: CPF -> Data -> Vacinados -> Vacinados
 aplicaSegDose citizenCPF dataVacinacao dataBankVacinados
- | (firstDoseApplied citizenCPF dataBankVacinados == False)                  = error "Cidadão não tomou a primeira dose!"
- | (contadorDeVacinasJaTomadasPorCidadao citizenCPF dataBankVacinados == 2)  = error "Cidadão já tomou a segunda dose"
--- |
-
+ | (firstDoseApplied citizenCPF dataBankVacinados == False)                                      = error "Cidadão não tomou a primeira dose!"
+ | (contadorDeVacinasJaTomadasPorCidadao citizenCPF dataBankVacinados == 2)                      = error "Cidadão já tomou a segunda dose."
+ | (checadorSeDataSegDoseMaiorQuePrimDose citizenCPF dataVacinacao dataBankVacinados == False)   = error "Data Inválida, por favor corrigir."
+-- | continuar aqui
 dosesJaTomadasPorCidadao :: CPF -> Vacinados -> Doses
 dosesJaTomadasPorCidadao citizenCPF dataBankVacinados = --Sempre vai retornar uma lista, de lista única [[vacinasJaAplicadas]]
          head [vacinasJaAplicadas | (cpfData, vacinasJaAplicadas) <- dataBankVacinados, citizenCPF == cpfData]
@@ -203,11 +203,10 @@ dosesJaTomadasPorCidadao citizenCPF dataBankVacinados = --Sempre vai retornar um
 contadorDeVacinasJaTomadasPorCidadao :: CPF -> Vacinados -> Int
 contadorDeVacinasJaTomadasPorCidadao  citizenCPF dataBankVacinados =   length (dosesJaTomadasPorCidadao citizenCPF dataBankVacinados)
 
-
-         
-checadorSeDataSegDoseMaiorQuePrimDose :: CPF -> Data -> Vacinados -> Vacinados
+      
+checadorSeDataSegDoseMaiorQuePrimDose :: CPF -> Data -> Vacinados -> Bool
 checadorSeDataSegDoseMaiorQuePrimDose citizenCPF dataVacinacao dataBankVacinados = --Os Filtros dessa função 1- Passe para a nova lista apenas o CPF que eu quero, 2- Passe para lista apenas datas maiores da minha ultima vacina
-          [vacinado | vacinado <- dataBankVacinados, citizenCPF == getCPFDeVacinado vacinado, fComparadorDeData dataVacinacao vacinado]
+        (length [vacinado | vacinado <- dataBankVacinados, citizenCPF == getCPFDeVacinado vacinado, fComparadorDeData dataVacinacao vacinado]) /= 0
           where --Compara se a nova data de vacinacao é maior que do que a data de vacina da primeira dose
               fComparadorDeData (diaDaNovaVacina, mesDaNovaVacina, anoDaNovaVacina) ( cpfData, [(vacinaData, (diaData, mesData, anoData))] )
                 | anoData < anoDaNovaVacina                                                                        = True
