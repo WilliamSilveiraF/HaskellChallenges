@@ -304,10 +304,20 @@ getCidadao2 :: CPF -> CadastroSUS -> Cidadao
 getCidadao2 citizenCPF dataBankSUS =
     head [(cpf, nome, gen, nasc, end, mun, estado, tel, email) | (cpf, nome, gen, nasc, end, mun, estado, tel, email) <- dataBankSUS, citizenCPF ==  cpf]
 
+--Pegue município a partir de CPF
 getMunicipio2 :: CPF -> CadastroSUS -> Municipio
 getMunicipio2 citizenCPF dataBankSUS = getMunicipio (getCidadao2 citizenCPF dataBankSUS)
 
+--Pegue estado a partir de CPF
+getEstado2 :: CPF -> CadastroSUS -> Estado
+getEstado2 citizenCPF dataBankSUS = getEstado (getCidadao2 citizenCPF dataBankSUS)
 
+-- Calcula Quantidade De Doses por município 
 quantidadeDoseMun :: Vacinados -> TipoDose -> Municipio -> CadastroSUS -> Quantidade
 quantidadeDoseMun dataBankVacinados tipodose municipio dataBankSUS =
     length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getMunicipio2 (fst citizen) dataBankSUS == municipio]
+    
+-- Calcula Quantidade De Doses por estado 
+quantidadeDoseEst :: Vacinados -> TipoDose -> Estado -> CadastroSUS -> Quantidade
+quantidadeDoseEst dataBankVacinados tipodose estado dataBankSUS =
+    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getEstado2 (fst citizen) dataBankSUS == estado]
