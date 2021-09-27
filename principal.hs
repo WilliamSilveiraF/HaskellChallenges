@@ -190,12 +190,59 @@ aplicaPrimDose citizenCPF dataBankSUS faixadeidade municipio vacina dataVacinaca
  | vacina == "Jansen"                                                    = (:) (citizenCPF, [(vacina, dataVacinacao), (vacina, dataVacinacao)])  dataBankVacinados --Lê-se adicione ao meu dataBank essa pessoa
  | otherwise                                                             = (:) (citizenCPF, [(vacina, dataVacinacao)]) dataBankVacinados
 
+
 aplicaSegDose :: CPF -> Data -> Vacinados -> Vacinados
 aplicaSegDose citizenCPF dataVacinacao dataBankVacinados
  | (firstDoseApplied citizenCPF dataBankVacinados == False)                                      = error "Cidadão não tomou a primeira dose!"
  | (contadorDeVacinasJaTomadasPorCidadao citizenCPF dataBankVacinados == 2)                      = error "Cidadão já tomou a segunda dose."
  | (checadorSeDataSegDoseMaiorQuePrimDose citizenCPF dataVacinacao dataBankVacinados == False)   = error "Data Inválida, por favor corrigir."
--- | continuar aqui
+ | otherwise                                                                                     = adicionaOutraDoseAoVacinado citizenCPF dataVacinacao dataBankVacinados
+
+atualizaVacina:: CPF -> TipoDose -> Vacina -> Vacinados -> Vacinados
+atualizaVacina citizenCPF tipodose vacina dataBankVacinados
+ | (checaCPFBancoDeVacinas citizenCPF dataBankVacinados == False)                                = error "CPF não consta no Banco de Vacinados."
+ | (contadorDeVacinasJaTomadasPorCidadao citizenCPF dataBankVacinados) < tipodose                = error "Essa dose ainda não foi ministrada para o cidadão."
+ | otherwise                                                                                     = fAtualizaVacina citizenCPF tipodose vacina dataBankVacinados
+
+
+fAtualizaVacina :: CPF -> TipoDose -> Vacina -> Vacinados -> Vacinados
+fAtualizaVacina citizenCPF tipodose vacinaAlterada dataBankVacinados =
+    concat [ [falterarVacina tipodose vacinaAlterada vacinadoAlterado | vacinadoAlterado <- dataBankVacinados, citizenCPF == getCPFDeVacinado vacinadoAlterado], [vacinado | vacinado <- dataBankVacinados, not (citizenCPF == getCPFDeVacinado vacinado)]  ]
+      where
+         falterarVacina tipodose vacinaAlterada vacinadoAlterado
+          | length (getDosesDeVacinado vacinadoAlterado) == 2   = falterarvacinacom2Doses tipodose vacinaAlterada vacinadoAlterado --Se o número de doses ministradas for igual a 2 usar a função falterarvacinacom2Doses
+          | length (getDosesDeVacinado vacinadoAlterado) == 1   = falterarvacinacom1Dose  vacinaAlterada vacinadoAlterado --Se o número de doses ministradas for igual a 2 usar a função falterarvacinacom1Dose
+
+
+falterarvacinacom1Dose :: Vacina -> Vacinado -> Vacinado --Apenas para Vacinado que tomou apenas 1 dose até o momento
+falterarvacinacom1Dose vacinaAlterada (cpfData,[(vacinaData,dataVacinacaoData)]) =
+    (cpfData,[(vacinaAlterada,dataVacinacaoData)]) --Altere a vacina da dose única
+
+falterarvacinacom2Doses :: TipoDose -> Vacina -> Vacinado -> Vacinado --Apenas para Vacinado que já tomou 2 doses 
+falterarvacinacom2Doses tipodose vacinaAlterada (cpfData, [(vacina1,dataVacinacao1), (vacinaData2,dataVacinacao2)] )
+   | tipodose == 1    = (cpfData, [(vacinaAlterada, dataVacinacao1), (vacinaData2,dataVacinacao2)]) -- altera a vacina da primeira dose
+   | tipodose == 2    = (cpfData, [(vacina1,dataVacinacao1), (vacinaAlterada,dataVacinacao2)])      -- altera a vacina da segunda dose
+
+
+
+
+
+
+-- TRUE == CPF CONSTA NO BANCO DE VACINADOS // FALSE == CPF NÃO CONSTA NO BANCO DE VACINADOS
+checaCPFBancoDeVacinas :: CPF -> Vacinados -> Bool
+checaCPFBancoDeVacinas citizenCPF dataBankVacinados =  
+    length [vaccinated | vaccinated <- dataBankVacinados, citizenCPF == getCPFDeVacinado vaccinated] /= 0
+
+
+adicionaOutraDoseAoVacinado :: CPF -> Data -> Vacinados -> Vacinados
+adicionaOutraDoseAoVacinado citizenCPF dataVacinacao dataBankVacinados = -- A primeira compreensão retorna uma lista com apenas o cidadao que está sendo vacinado, adicionando a dose que ele tomou a sua lista tipo [Doses]   //   A segunda compreensão retornada o dataBankVacinados sem o cidadão que está sendo vacinado
+    concat [  [fAdicionarVacina (cpfData,[(vacinaData,dataVacinacaoData)]) citizenCPF | (cpfData,[(vacinaData,dataVacinacaoData)]) <- dataBankVacinados], [vacinado | vacinado <- dataBankVacinados, not (citizenCPF == getCPFDeVacinado vacinado)] ]
+             where
+               fAdicionarVacina (cpfData,[(vacinaData,dataVacinacaoData)]) citizenCPF
+                 | (cpfData == citizenCPF)                                  =  (citizenCPF,(:) (vacinaData, dataVacinacao) [ (vacinaData,dataVacinacaoData)])     
+          
+
+
 dosesJaTomadasPorCidadao :: CPF -> Vacinados -> Doses
 dosesJaTomadasPorCidadao citizenCPF dataBankVacinados = --Sempre vai retornar uma lista, de lista única [[vacinasJaAplicadas]]
          head [vacinasJaAplicadas | (cpfData, vacinasJaAplicadas) <- dataBankVacinados, citizenCPF == cpfData]
@@ -232,6 +279,10 @@ checaIntervaloDeIdades citizenCPF dataBankSUS (ageInt, ageEnd) =
 firstDoseApplied :: CPF -> Vacinados -> Bool
 firstDoseApplied citizenCPF dataBankVacinados = 
     length [pessoaData | pessoaData <- dataBankVacinados, citizenCPF == (getCPFDeVacinado pessoaData)] /= 0
+
+
+getDosesDeVacinado :: Vacinado -> Doses
+getDosesDeVacinado ( _, dosesDoVacinado) = dosesDoVacinado 
 
 getCPFDeVacinado :: Vacinado -> CPF
 getCPFDeVacinado (cpfVacinado,  _)  = cpfVacinado
