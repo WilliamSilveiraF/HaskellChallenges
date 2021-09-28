@@ -2,12 +2,25 @@ type CadastroSUS = [Cidadao]
 
 --Construção do Meu Banco De Dados
 dataBankSUS::CadastroSUS
-dataBankSUS = 
-    [(26716347665, "Paulo Souza", 'M', (11,10,1996),"Rua A, 202","Muribeca", "SE", "999997000", "psouza@gmail.com"),
-    (3, "Ana Reis",'F', (5,4,1970), "Rua B, 304","Aracaju", "SE", "999826004", "areis@gmail.com"),
-    (10, "Guilherme Alves", 'M', (02,07,2002),"Rua C, 405","Salgado", "SE", "999997044", "guilherme@gmail.com"),
-    (88888888888, "Esmeralda Oliveira", 'F', (09,09,2003),"Rua D, 506","Lagarto", "SE", "999996025", "esmeralda@gmail.com"),
-    (10101010101, "Fernanda Menezes", 'F', (01,04,2000),"Rua E, 506","Lagarto", "SE", "999996025", "esmeralda@gmail.com")]
+dataBankSUS = -- PS: Todos os dados foram gerados pelo site 4Devs e alterados, e são SOMENTE usados para fins acadêmicos.
+    [
+    (63867508057, "Thiago Santiago Vieira", 'M', (13,05,1981),"Rua Porto, 491","Curitiba", "PR", "65983086273", "santiagovieira@meuteste.com.br"),
+    (77185804325, "Yasmin Zanin Calisto Porto",'F', (20,01,1964), "Rua Ze Antonio, 727","Belo Horizonte", "MG", "35987920626", "zanincalisto@meuteste.com.br"),
+    (91010353917, "Sophia Porto Scheff", 'F', (25,02,1968),"Rua San Francisco, 269","Macapa", "AP", "96987481836", "sophiascheff@meuteste.com.br"),
+    (25969757764, "Heitor Roberto Ambrozzi Paulista", 'M', (01,07,1982),"Avenida Tenente Pailota, 234","Serra", "ES", "28987152998", "robertoambrozzi@meuteste.com.br"),
+    (26184931860, "Joaquim Nilton Santana Vieira", 'M', (02,06,1968),"Rua Paralela, 276","Maraba", "PA", "94993289942", "niltonjoaquim@meuteste.com.br"),
+    (81102000772, "Leandro Moncape Paulo", 'M', (06,05,2005),"Avenida Policial Alves, 342","Vitoria", "ES", "27982487210", "leandromoncape@meuteste.com.br"),
+    (59701483562, "Natalia Cortes Cardiff", 'F', (16,03,2001),"Rua Castro Alves, 123","Goiania", "GO", "62985796831", "nataliacardiff@meuteste.com"),
+    (91257829131, "Hadassa Chelsea Macedo", 'F', (12,03,1987),"Avenida Dr Andre Mendes","Fortaleza", "CE", "85986302489", "hadassachelsea@meuteste.com.br"),
+    (79812945849, "Rafael Andre Manchester", 'M', (19,05,1995),"Rua Bombeiro Motta, 341","Salvador", "BA", "71988110952", "rafaelmanchester@meuteste.com.br"),
+    (51452783837, "Lucas Leria Lisboa", 'M', (19,11,1978),"Rua Plinio Salgado, 302","Rio de Janeiro", "RJ", "21994296238", "lucaslisboa@meuteste.com.br"),
+    (31678947461, "Tereza Augusto Amsterdam", 'F', (23,10,1976),"Alameda Vermelha, 213","Salvador", "BA", "71984722460", "terezaaugusto@meuteste.com.br"),
+    (84325650761, "Debora Carmen Abardiel", 'F', (12,12,1967),"Rua Andre Gustao, 654","Serra", "ES", "27982033136", "abardielcamrmen@meuteste.com.br"),
+    (83453833141, "Isabela Angeles Takamoto", 'F', (05,08,1950),"Rua Galhaço Gustavo, 526","Valinhos", "SP", "17995866243", "isabelaangeles@meuteste.com.br"),
+    (45623530699, "Mario Nakamoto Takamura", 'M', (02,04,1984),"Rua Viera Foroni, 437","Recife", "PE", "71997359940", "takamuramario@meuteste.com"),
+    (44383462108, "Anderson Maik Bliach", 'M', (27,03,2000),"Rua Baroni Reis, 559","Joinville", "SC", "32999017422", "bliachmaik@meuteste.com.br"),
+    (19945212000, "Raul NewCasttle Hornoff", 'M', (03,01,2001),"Rua Carlos Valinhos, 739","Sao Paulo", "SP", "11997224340", "raulnewcasttle@meuteste.com.br")
+    ]
 
 --Tipagem
 type CPF = Integer
@@ -32,8 +45,8 @@ getCPF :: Cidadao -> CPF
 getCPF (cpf, _, _, _, _, _, _, _, _) = cpf
 
 --Calcule a idade de um Cidadao
-getIdade :: Cidadao -> Int
-getIdade ( _, _, _, ( _, _, anoDeNascimento), _, _, _, _, _) = 2021 - anoDeNascimento
+getIdade :: Data -> Cidadao -> Int
+getIdade (diaHj, mesHj, anoHj) ( _, _, _, ( diaNasc, mesNasc, anoNasc), _, _, _, _, _) = ((diaHj - diaNasc)*1 + (mesHj - mesNasc)*30 + (anoHj - anoNasc)*365) `div` 365
 
 --Localize Municipio do Cidadao
 getMunicipio :: Cidadao -> Municipio
@@ -127,27 +140,27 @@ cidadaosPorEstado dataBankSUS state =
        length [pessoaData | pessoaData <- dataBankSUS, fsearchstate pessoaData state]
 
 -- Procure o número de pessoas que estão entre um intervalo de idades em um Município "X"
-cidadaosPorMunicipioIdade :: CadastroSUS -> Municipio -> FaixaIdade -> Quantidade
-cidadaosPorMunicipioIdade dataBankSUS municipio (initAge, endAge) = 
-    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade pessoaData), (getIdade pessoaData <= endAge), fsearchmunicipio pessoaData municipio]
+cidadaosPorMunicipioIdade :: CadastroSUS -> Municipio -> FaixaIdade -> Data -> Quantidade
+cidadaosPorMunicipioIdade dataBankSUS municipio (initAge, endAge) dataDeHj= 
+    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade dataDeHj pessoaData), (getIdade dataDeHj pessoaData <= endAge), fsearchmunicipio pessoaData municipio]
   
 --Procure o número de pessoas que estão entre um intervalo de idade em um Estado "Y"
-cidadaosPorEstadoIdade :: CadastroSUS -> Estado -> FaixaIdade -> Quantidade
-cidadaosPorEstadoIdade dataBankSUS state (initAge, endAge) =
-    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade pessoaData), (getIdade pessoaData <= endAge), fsearchstate pessoaData state]
+cidadaosPorEstadoIdade :: CadastroSUS -> Estado -> FaixaIdade -> Data -> Quantidade
+cidadaosPorEstadoIdade dataBankSUS state (initAge, endAge) dataDeHj =
+    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade dataDeHj pessoaData), (getIdade dataDeHj pessoaData <= endAge), fsearchstate pessoaData state]
 
 
 --            GERAR LISTAS POR FAIXA DE IDADE                    --
 
 --gerar lista por um conjunto de Faixas de Idades e por Municipio
-geraListaMunicipioFaixas :: CadastroSUS -> Municipio -> [FaixaIdade] -> [(FaixaIdade, Quantidade)]
-geraListaMunicipioFaixas dataBankSUS municipio listaIntervaloDeIdades = 
-    [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS municipio ageRanges]]
+geraListaMunicipioFaixas :: CadastroSUS -> Municipio -> [FaixaIdade] -> Data -> [(FaixaIdade, Quantidade)]
+geraListaMunicipioFaixas dataBankSUS municipio listaIntervaloDeIdades dataDeHj = 
+    [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS municipio ageRanges dataDeHj]]
 
 --gerar lista por um conjunto de Faixas de Idades e por Estado
-geraListaEstadoFaixas :: CadastroSUS -> Estado -> [FaixaIdade] -> [(FaixaIdade, Quantidade)]
-geraListaEstadoFaixas dataBankSUS state listaIntervaloDeIdades = 
-    [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS state ageRanges]]
+geraListaEstadoFaixas :: CadastroSUS -> Estado -> [FaixaIdade] -> Data -> [(FaixaIdade, Quantidade)]
+geraListaEstadoFaixas dataBankSUS state listaIntervaloDeIdades dataDeHj = 
+    [(ageRanges, amount) | ageRanges <- listaIntervaloDeIdades, amount <- [cidadaosPorEstadoIdade dataBankSUS state ageRanges dataDeHj]]
 
 
 
@@ -205,9 +218,9 @@ firstDoseApplied citizenCPF dataBankVacinados =
     length [pessoaData | pessoaData <- dataBankVacinados, citizenCPF == (getCPFDeVacinado pessoaData)] /= 0
 
 -- True = Cidadão está no intervalo de Idade // False = Cidadão não está no intervalo de Idade
-checaIntervaloDeIdades :: CPF -> CadastroSUS -> FaixaIdade -> Bool
-checaIntervaloDeIdades citizenCPF dataBankSUS (ageInt, ageEnd) =  
-    (length [pessoaData | pessoaData <- dataBankSUS,  citizenCPF == (getCPF pessoaData), ageInt < getIdade pessoaData &&  getIdade pessoaData < ageEnd]) == (length (getCidadao citizenCPF dataBankSUS))-- É o CPF que eu procuro?. A idade dele está entre as idades de parâmetro que foi me dado na função?
+checaIntervaloDeIdades :: CPF -> CadastroSUS -> FaixaIdade -> Data -> Bool
+checaIntervaloDeIdades citizenCPF dataBankSUS (ageInt, ageEnd) dataDeHj =  
+    (length [pessoaData | pessoaData <- dataBankSUS,  citizenCPF == (getCPF pessoaData), ageInt < getIdade dataDeHj pessoaData &&  getIdade dataDeHj pessoaData < ageEnd]) == (length (getCidadao citizenCPF dataBankSUS))-- É o CPF que eu procuro?. A idade dele está entre as idades de parâmetro que foi me dado na função?
 
 -- Checa se o Municipio fornecido, foi o mesmo que o cidadão cadastrou no dataBankSUS    -- Aux de "aplicaPrimDose"
 checaMunicipioDoCidadao :: CPF -> CadastroSUS -> Municipio -> Bool   --TRUE = O municipio confere com o Banco de Dados // FALSE = O municipio não confere
@@ -274,14 +287,14 @@ falterarvacinacom2Doses tipodose vacinaAlterada (cpfData, [(vacina1,dataVacinaca
 --Vacinados = [(CPF, Doses), (CPF, [(Vacina, Data)]), (Int, [String, (Dia, Mes, Ano)])]
 
 -- Aplica a Primeira Dose
-aplicaPrimDose :: CPF -> CadastroSUS -> FaixaIdade -> Municipio -> Vacina -> Data -> Vacinados -> Vacinados
-aplicaPrimDose citizenCPF dataBankSUS faixadeidade municipio vacina dataVacinacao dataBankVacinados
+aplicaPrimDose :: CPF -> CadastroSUS -> FaixaIdade -> Municipio -> Vacina -> Data -> Data -> Vacinados -> Vacinados
+aplicaPrimDose citizenCPF dataBankSUS faixadeidade municipio vacina dataVacinacao dataDeHj dataBankVacinados
  | (firstDoseApplied citizenCPF dataBankVacinados == True)               = error "Primeira dose já aplicada"  --Se minha primeira dose foi aplicada, retorne "Primeira dose já aplicada"
- | (checaCPF citizenCPF dataBankSUS == False)                            = error "CPF não encontrado no Banco de Dados SUS" --Se o CPF não foi encontrado no Banco De Dados SUS retorne "CPF não encontrado no Banco de Dados SUS"
- | (checaIntervaloDeIdades citizenCPF dataBankSUS faixadeidade == False) = error "Fora da idade de vacinação corrente" --Se a idade do CPF que usei não está na minha faixa de idades, retorne "Fora da idade de vacinação corrente"
- | (checaMunicipioDoCidadao citizenCPF dataBankSUS municipio == False)   = error "Municipio não compatível com o CadastroSUS. Por favor atualizar município." --Se o municipio cadastrado no dataBankSUS não for igual o informado pelo cidadão retorne "Municipio não compatível com o CadastroSUS. Por favor atualizar município."
- | vacina == "Jansen"                                                    = (:) (citizenCPF, [(vacina, dataVacinacao), (vacina, dataVacinacao)])  dataBankVacinados --Adiciona ao meu dataBankVacinados cidadão que tomaram "Jansen", como Jansen é dose única adicionamos duas tuplas à lista Type "Doses"
- | otherwise                                                             = (:) (citizenCPF, [(vacina, dataVacinacao)]) dataBankVacinados --Adiciona ao meu dataBankVacinados cidadão que está tudo OK e tomou vacina diferente da "Jansen"
+ | (checaCPF citizenCPF dataBankSUS == False)                                     = error "CPF não encontrado no Banco de Dados SUS" --Se o CPF não foi encontrado no Banco De Dados SUS retorne "CPF não encontrado no Banco de Dados SUS"
+ | (checaIntervaloDeIdades citizenCPF dataBankSUS faixadeidade dataDeHj == False) = error "Fora da idade de vacinação corrente" --Se a idade do CPF que usei não está na minha faixa de idades, retorne "Fora da idade de vacinação corrente"
+ | (checaMunicipioDoCidadao citizenCPF dataBankSUS municipio == False)            = error "Municipio não compatível com o CadastroSUS. Por favor atualizar município." --Se o municipio cadastrado no dataBankSUS não for igual o informado pelo cidadão retorne "Municipio não compatível com o CadastroSUS. Por favor atualizar município."
+ | vacina == "Jansen"                                                             = (:) (citizenCPF, [(vacina, dataVacinacao), (vacina, dataVacinacao)])  dataBankVacinados --Adiciona ao meu dataBankVacinados cidadão que tomaram "Jansen", como Jansen é dose única adicionamos duas tuplas à lista Type "Doses"
+ | otherwise                                                                      = (:) (citizenCPF, [(vacina, dataVacinacao)]) dataBankVacinados --Adiciona ao meu dataBankVacinados cidadão que está tudo OK e tomou vacina diferente da "Jansen"
 
 -- Aplica a Segunda Dose
 aplicaSegDose :: CPF -> Data -> Vacinados -> Vacinados
@@ -323,14 +336,14 @@ quantidadeDoseEst dataBankVacinados tipodose estado dataBankSUS =
     length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getEstado2 (fst citizen) dataBankSUS == estado]
 
 -- Calcula Quantidade por Dose e Por Município
-quantidadeMunIdDose :: Vacinados -> Municipio -> FaixaIdade -> TipoDose -> CadastroSUS -> Quantidade
-quantidadeMunIdDose dataBankVacinados municipio (ageInit, ageEnd) tipodose dataBankSUS =
-    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getMunicipio2 (fst citizen) dataBankSUS == municipio, checaIntervaloDeIdades (fst citizen) dataBankSUS (ageInit, ageEnd)]
+quantidadeMunIdDose :: Vacinados -> Municipio -> FaixaIdade -> TipoDose -> Data -> CadastroSUS -> Quantidade
+quantidadeMunIdDose dataBankVacinados municipio (ageInit, ageEnd) tipodose dataDeHj dataBankSUS =
+    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getMunicipio2 (fst citizen) dataBankSUS == municipio, checaIntervaloDeIdades (fst citizen) dataBankSUS (ageInit, ageEnd) dataDeHj]
 
 -- Calcula a Quantidade por Dose e Por Estado
-quantidadeEstIdDose :: Vacinados -> Estado -> FaixaIdade -> TipoDose -> CadastroSUS -> Quantidade
-quantidadeEstIdDose dataBankVacinados estado (ageInit, ageEnd) tipodose dataBankSUS =
-    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getEstado2 (fst citizen) dataBankSUS == estado, checaIntervaloDeIdades (fst citizen) dataBankSUS (ageInit, ageEnd)]
+quantidadeEstIdDose :: Vacinados -> Estado -> FaixaIdade -> TipoDose -> Data -> CadastroSUS -> Quantidade
+quantidadeEstIdDose dataBankVacinados estado (ageInit, ageEnd) tipodose dataDeHj dataBankSUS =
+    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getEstado2 (fst citizen) dataBankSUS == estado, checaIntervaloDeIdades (fst citizen) dataBankSUS (ageInit, ageEnd) dataDeHj]
 
 -- Calcula a Quantidade por tipo de vacina, tipo da dose e por município 
 quantidadeMunVacDose :: Vacinados -> Municipio -> Vacina -> TipoDose -> CadastroSUS -> Quantidade
@@ -361,3 +374,4 @@ fChecadorDeUmaDose :: Vacina -> Vacinado -> Bool
 fChecadorDeUmaDose vacina (cpfData, [(vacina1,dataVacinacao1)])
    | vacina == vacina1                          = True
    | otherwise                                  = False
+
