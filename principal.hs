@@ -316,8 +316,48 @@ getEstado2 citizenCPF dataBankSUS = getEstado (getCidadao2 citizenCPF dataBankSU
 quantidadeDoseMun :: Vacinados -> TipoDose -> Municipio -> CadastroSUS -> Quantidade
 quantidadeDoseMun dataBankVacinados tipodose municipio dataBankSUS =
     length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getMunicipio2 (fst citizen) dataBankSUS == municipio]
-    
--- Calcula Quantidade De Doses por estado 
+
+-- Calcula Quantidade por Dose e Por Estado 
 quantidadeDoseEst :: Vacinados -> TipoDose -> Estado -> CadastroSUS -> Quantidade
 quantidadeDoseEst dataBankVacinados tipodose estado dataBankSUS =
     length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getEstado2 (fst citizen) dataBankSUS == estado]
+
+-- Calcula Quantidade por Dose e Por Município
+quantidadeMunIdDose :: Vacinados -> Municipio -> FaixaIdade -> TipoDose -> CadastroSUS -> Quantidade
+quantidadeMunIdDose dataBankVacinados municipio (ageInit, ageEnd) tipodose dataBankSUS =
+    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getMunicipio2 (fst citizen) dataBankSUS == municipio, checaIntervaloDeIdades (fst citizen) dataBankSUS (ageInit, ageEnd)]
+
+-- Calcula a Quantidade por Dose e Por Estado
+quantidadeEstIdDose :: Vacinados -> Estado -> FaixaIdade -> TipoDose -> CadastroSUS -> Quantidade
+quantidadeEstIdDose dataBankVacinados estado (ageInit, ageEnd) tipodose dataBankSUS =
+    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getEstado2 (fst citizen) dataBankSUS == estado, checaIntervaloDeIdades (fst citizen) dataBankSUS (ageInit, ageEnd)]
+
+-- Calcula a Quantidade por tipo de vacina, tipo da dose e por município 
+quantidadeMunVacDose :: Vacinados -> Municipio -> Vacina -> TipoDose -> CadastroSUS -> Quantidade
+quantidadeMunVacDose dataBankVacinados municipio vacina tipodose dataBankSUS =
+    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getMunicipio2 (fst citizen) dataBankSUS == municipio, fSeEhVacinaQueProcuro citizen vacina dataBankVacinados]
+      where
+          fSeEhVacinaQueProcuro citizen vacina dataBankVacinados
+             | contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados == 2    = fChecadorDeDuasDoses vacina citizen
+             | contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados == 1    = fChecadorDeUmaDose vacina citizen
+
+-- Calcula a Quantidade por tipo de vacina, tipo da dose e por Estado 
+quantidadeEstVacDose :: Vacinados -> Estado -> Vacina -> TipoDose -> CadastroSUS -> Quantidade
+quantidadeEstVacDose dataBankVacinados estado vacina tipodose dataBankSUS =
+    length [citizen | citizen <- dataBankVacinados,  (contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados) >= tipodose, getEstado2 (fst citizen) dataBankSUS == estado, fSeEhVacinaQueProcuro citizen vacina dataBankVacinados]
+      where
+          fSeEhVacinaQueProcuro citizen vacina dataBankVacinados
+             | contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados == 2    = fChecadorDeDuasDoses vacina citizen
+             | contadorDeVacinasJaTomadasPorCidadao  (fst citizen) dataBankVacinados == 1    = fChecadorDeUmaDose vacina citizen
+
+-- Checa se é a Vacina que eu procuro ou não em um vacinado com 2 doses * Função Auxiliar
+fChecadorDeDuasDoses :: Vacina -> Vacinado -> Bool
+fChecadorDeDuasDoses vacina (cpfData, [(vacina1,dataVacinacao1), (vacinaData2,dataVacinacao2)])
+    | vacina1 == vacina                         = True
+    | otherwise                                 = False
+
+-- Checa se é a Vacina que eu procuro ou não em um vacinado com 1 dose * Função Auxiliar
+fChecadorDeUmaDose :: Vacina -> Vacinado -> Bool
+fChecadorDeUmaDose vacina (cpfData, [(vacina1,dataVacinacao1)])
+   | vacina == vacina1                          = True
+   | otherwise                                  = False
