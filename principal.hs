@@ -115,39 +115,25 @@ type FaixaIdade = (IdadeInicial, IdadeFinal)
 type Quantidade = Int
 
 
---   Funções que usei nesse tópico   --
-
---Criei essa função com o objetivo de localizar Cidadao através de determinados atributos que os mesmos possuem, neste primeiro caso abaixo foi Município, mas podia ser estado, cpf, data de nascimento e etc.
-fsearchmunicipio :: Cidadao -> Municipio -> Bool
-fsearchmunicipio (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) municipioProcurado
-            | (municipioProcurado == munData)    = True
-            | otherwise                          = False
-
-fsearchstate :: Cidadao -> Estado -> Bool
-fsearchstate (cpfData, nomeData, genData, nascData, endData, munData, estadoData, telData, emailData) stateProcurado
-            | (stateProcurado == estadoData)    = True
-            | otherwise                         = False
-
-
 --Dado um município procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
 cidadaosPorMunicipio :: CadastroSUS -> Municipio -> Quantidade
 cidadaosPorMunicipio dataBankSUS municipio =
-        length [pessoaData | pessoaData <- dataBankSUS, fsearchmunicipio pessoaData municipio]
+        length [pessoaData | pessoaData <- dataBankSUS, getMunicipio pessoaData == municipio]
 
 --Dado um Estado procure no meu dataBankSUS a quantidade de pessoas cadastradas que afirmaram morar nele
 cidadaosPorEstado :: CadastroSUS -> Estado -> Quantidade
 cidadaosPorEstado dataBankSUS state =
-       length [pessoaData | pessoaData <- dataBankSUS, fsearchstate pessoaData state]
+       length [pessoaData | pessoaData <- dataBankSUS, getEstado pessoaData == state]
 
 -- Procure o número de pessoas que estão entre um intervalo de idades em um Município "X"
 cidadaosPorMunicipioIdade :: CadastroSUS -> Municipio -> FaixaIdade -> Data -> Quantidade
 cidadaosPorMunicipioIdade dataBankSUS municipio (initAge, endAge) dataDeHj= 
-    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade dataDeHj pessoaData), (getIdade dataDeHj pessoaData <= endAge), fsearchmunicipio pessoaData municipio]
+    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade dataDeHj pessoaData), (getIdade dataDeHj pessoaData <= endAge), getMunicipio pessoaData == municipio]
   
 --Procure o número de pessoas que estão entre um intervalo de idade em um Estado "Y"
 cidadaosPorEstadoIdade :: CadastroSUS -> Estado -> FaixaIdade -> Data -> Quantidade
 cidadaosPorEstadoIdade dataBankSUS state (initAge, endAge) dataDeHj =
-    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade dataDeHj pessoaData), (getIdade dataDeHj pessoaData <= endAge), fsearchstate pessoaData state]
+    length [pessoaData | pessoaData <- dataBankSUS, (initAge <= getIdade dataDeHj pessoaData), (getIdade dataDeHj pessoaData <= endAge), getEstado pessoaData == state]
 
 
 --            GERAR LISTAS POR FAIXA DE IDADE                    --
@@ -170,8 +156,16 @@ type Vacinados = [Vacinado]
 
 dataBankVacinados :: Vacinados
 dataBankVacinados = [ 
-                    ( 3, [("Pfizer", (1, 12, 2020)), ("Pfizer", (30, 11, 2020))] ),
-                    (10, [ ("Moderna", (2, 11, 2020)) ])
+                    (63867508057, [("Pfizer", (1, 12, 2020)), ("Pfizer", (03, 01, 2021))] ),
+                    (77185804325, [ ("AstraZeneca", (2, 11, 2020)) ]),
+                    (91010353917, [("CoronaVac", (17, 11, 2020)), ("CoronaVac", (30, 12, 2020))]),
+                    (25969757764, [("AstraZeneca", (1, 03, 2021)), ("AstraZeneca", (30, 05, 2021))]),
+                    (26184931860, [("CoronaVac", (19, 10, 2020)), ("CoronaVac", (30, 11, 2020))]),
+                    (81102000772, [ ("Pfizer", (23, 11, 2020)) ]),
+                    (59701483562, [ ("CoronaVac", (13, 09, 2020)) ]),
+                    (91257829131, [ ("CoronaVac", (26, 06, 2020)) ]),
+                    (79812945849, [("Pfizer", (27, 07, 2020)), ("Pfizer", (30, 09, 2020))]),
+                    (84325650761, [("CoronaVac", (06, 12, 2020)) ])
                     ]
 
 type Vacina = String
@@ -375,3 +369,27 @@ fChecadorDeUmaDose vacina (cpfData, [(vacina1,dataVacinacao1)])
    | vacina == vacina1                          = True
    | otherwise                                  = False
 
+-- Quantidade de pessoas com a segunda dose atrasada em um municipio
+quantidadeMunAtrasados :: Vacinados -> CadastroSUS -> Municipio -> Data -> Quantidade
+quantidadeMunAtrasados dataBankVacinados dataBankSUS municipio dataDeHj =
+    length [citizen | citizen <- dataBankVacinados, municipio == getMunicipio2 (fst citizen) dataBankSUS,  fseletor citizen dataDeHj]
+      where
+         fseletor citizen dataDeHj
+           | length (getDosesDeVacinado citizen) == 2  = False --Se a pessoa já tomou as 2 doses, ela não tá com a dose atrasada
+           | length (getDosesDeVacinado citizen) == 1  = fChecaAtrasados citizen dataDeHj
+
+-- Quantidade de pessoas com a segunda dose atrasada em um Estado
+quantidadeEstAtrasados :: Vacinados -> CadastroSUS -> Estado -> Data -> Quantidade
+quantidadeEstAtrasados dataBankVacinados dataBankSUS state dataDeHj =
+    length [citizen | citizen <- dataBankVacinados, state == getEstado2 (fst citizen) dataBankSUS,  fseletor citizen dataDeHj]
+      where
+          fseletor citizen dataDeHj
+           | length (getDosesDeVacinado citizen) == 2  = False --Se a pessoa já tomou as 2 doses, ela não tá com a dose atrasada
+           | length (getDosesDeVacinado citizen) == 1  = fChecaAtrasados citizen dataDeHj
+
+-- Função checa Atrasado de acordo com cada intervalo de tempo necessário para sua vacina
+fChecaAtrasados :: Vacinado -> Data -> Bool
+fChecaAtrasados (cpfData, [(vacina1,dataVacinacao1)]) (diaHj, mesHj, anoHj)
+     | vacina1 == "CoronaVac" && (anoHj * 365 + mesHj * 30 + diaHj* 1) - ((getAnoDaData dataVacinacao1) * 365 + (getMesDaData dataVacinacao1) * 30 + (getDiaDaData dataVacinacao1) * 1) > 21                            = True -- retorna TRUE se a diferença do tempo é maior que 21 dias
+     | vacina1 == "Pfizer" || vacina1 == "AstraZeneca" &&  (anoHj * 365 + mesHj * 30 + diaHj* 1) - ((getDiaDaData dataVacinacao1) * 365 + (getDiaDaData dataVacinacao1) * 30 + (getDiaDaData dataVacinacao1) * 1) > 90  = True -- retorna TRUE se a diferença do tempo é maior que 90 dias
+     | otherwise                                                                                                                                                                                            = False
